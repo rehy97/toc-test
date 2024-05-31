@@ -1,25 +1,32 @@
-import { FC } from 'react';
-import { useTableOfContents } from './useTableOfContents.ts';
+import React, { FC, lazy, Suspense } from 'react';
+import { TreeNode, useTableOfContents } from './useTableOfContents';
 
 type TableOfContentsProps = ReturnType<typeof useTableOfContents>;
 
-// TODO: TableOfContents should render a hierarchical list of items
-//  item_1
-//      item_1_1
-//          item_1_1_1
-//      item_1_2
-//  item_2
-//  item_3
-//      item_3_1
-//  item_4
+// Lazy načítání komponenty TreeNodeComponent
+const TreeNodeComponent = lazy(() => import('./TreeNodeComponent'));
 
-export const TableOfContents: FC<TableOfContentsProps> = ({ items, onClick }) => (
-    <div>
-        {items.map((item) => (
-            <div key={item.id} style={{ display: 'flex' }}>
-                <div style={{ width: item.level * 20, height: 10 }} />
-                <button onClick={onClick(item)}>{item.name}</button>
-            </div>
+// Funkce pro vykreslení stromu uzlů
+const renderTree = (
+    nodes: TreeNode[],
+    expanded: { [id: string]: boolean },
+    toggleExpand: (id: string) => void
+) => (
+    <ul>
+        {nodes.map(node => (
+            // Suspense komponenta pro zobrazení fallback obsahu při lazy načítání
+            <Suspense fallback={<li>Loading...</li>} key={node.id}>
+                <TreeNodeComponent node={node} expanded={expanded} toggleExpand={toggleExpand} />
+            </Suspense>
         ))}
+    </ul>
+);
+
+// Hlavní komponenta pro zobrazení stromové struktury
+export const TableOfContents: FC<TableOfContentsProps> = ({ tree, expanded, toggleExpand }) => (
+    <div>
+        {renderTree(tree, expanded, toggleExpand)} {/* Vykreslení stromu uzlů */}
     </div>
 );
+
+export default TableOfContents;
